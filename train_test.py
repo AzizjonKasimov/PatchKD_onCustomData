@@ -5,7 +5,7 @@ from torch.cuda.amp import autocast
 from pkd.utils import set_random_seed, time_now
 from pkd.core import BasePatchKD
 from pkd.data_loader import IncrementalReIDLoaders
-from pkd.visualization import visualize, Logger, VisdomPlotLogger, VisdomFeatureMapsLogger
+from pkd.visualization import visualize, visualize_patches, Logger, VisdomPlotLogger, VisdomFeatureMapsLogger
 from pkd.operation import train_p_s_an_epoch, fast_test_p_s
 
 
@@ -105,6 +105,7 @@ def main(config):
     elif config.mode == 'visualize':  # visualization mode
         base.resume_from_model(config.resume_visualize_model)
         visualize(config, base, loaders)
+        visualize_patches(config, base, loaders)
 
 
 if __name__ == '__main__':
@@ -120,9 +121,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--seed', type=int, default=42)
-    parser.add_argument('--fp_16', type=bool, default=True)
+    parser.add_argument('--fp_16', type=bool, default=False)
     parser.add_argument('--running_time', type=str, default=running_time)
-    parser.add_argument('--visdom', type=bool, default=False)
+    parser.add_argument('--visdom', type=bool, default=True)
     parser.add_argument('--visdom_port', type=int, default=8097)
     parser.add_argument('--cuda', type=str, default='cuda')
     parser.add_argument('--mode', type=str, default='train', help='trian_10, train_5, train, test or visualize')
@@ -143,9 +144,9 @@ if __name__ == '__main__':
     parser.add_argument('--datasets_root', type=str, default=machine_dataset_path, help='mix/market/duke/')
     parser.add_argument('--combine_all', type=ast.literal_eval, default=False, help='train+query+gallery as train')
     parser.add_argument('--train_dataset', nargs='+', type=str,
-                        default=['market', 'subcuhksysu', 'duke', 'msmt17', 'cuhk03'])
+                        default=['market'])
     parser.add_argument('--test_dataset', nargs='+', type=str,
-                        default=['market', 'subcuhksysu', 'duke', 'cuhk03', 'allgeneralizable'])
+                        default=['market'])
 
     parser.add_argument('--image_size', type=int, nargs='+', default=[256, 128])
     parser.add_argument('--test_batch_size', type=int, default=64, help='test batch size')
@@ -177,7 +178,7 @@ if __name__ == '__main__':
                         help='new_gamma for the new module learning rate decay')
 
     parser.add_argument('--weight_decay', type=float, default=0.0005)
-    parser.add_argument('--total_train_epochs', type=int, default=50)
+    parser.add_argument('--total_train_epochs', type=int, default=5)
     parser.add_argument('--total_continual_train_epochs', type=int, default=50)
 
     # resume and save
@@ -188,7 +189,7 @@ if __name__ == '__main__':
 
     # test
     parser.add_argument('--fast_test', type=bool,
-                        default=True,
+                        default=False,
                         help='test during train using Cython')
     parser.add_argument('--test_frequency', type=int,
                         default=25,
@@ -205,18 +206,18 @@ if __name__ == '__main__':
     # visualization configuration
     parser.add_argument('--resume_visualize_model', type=str, default='/path/to/pretrained/model',
                         help='only available under visualize model')
-    parser.add_argument('--visualize_dataset', type=str, default='',
+    parser.add_argument('--visualize_dataset', type=str, default='market',
                         help='market, duke, only available under visualize model')
-    parser.add_argument('--visualize_mode', type=str, default='inter-camera',
+    parser.add_argument('--visualize_mode', type=str, default='all',
                         help='inter-camera, intra-camera, all, only available under visualize model')
-    parser.add_argument('--visualize_mode_onlyshow', type=str, default='pos', help='pos, neg, none')
+    parser.add_argument('--visualize_mode_onlyshow', type=str, default='none', help='pos, neg, none')
     parser.add_argument('--visualize_output_path', type=str, default='results/visualization/',
                         help='path to save visualization results, only available under visualize model')
     parser.add_argument('--output_featuremaps', type=bool, default=True,
                         help='During training visualize featuremaps')
     parser.add_argument('--output_featuremaps_frequency', type=int, default=10,
                         help='Frequency of visualize featuremaps')
-    parser.add_argument('--save_heatmaps', type=bool, default=False,
+    parser.add_argument('--save_heatmaps', type=bool, default=True,
                         help='During training visualize featuremaps and save')
 
     # losses configuration

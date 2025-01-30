@@ -128,6 +128,11 @@ class IncrementalReIDLoaders:
                                                    self.config.test_batch_size)
             self.test_loader_dict[one_test_dataset].append(temp_query_loader)
             self.test_loader_dict[one_test_dataset].append(temp_gallery_loader)
+        
+        if 'market' in self.config.test_dataset:
+            self.market_query_samples, self.market_gallery_samples = self._get_test_samples('market')
+            self.market_query_loader = self._get_loader(self.market_query_samples, self.transform_test, 128)
+            self.market_gallery_loader = self._get_loader(self.market_gallery_samples, self.transform_test, 128)
 
 
         IncrementalPersonReIDSamples._show_info(None, train_samples, query_sample, gallery_sample,

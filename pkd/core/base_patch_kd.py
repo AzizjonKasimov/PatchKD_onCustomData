@@ -7,6 +7,7 @@ import torch.optim as optim
 import os
 import os.path as osp
 import numpy as np
+import glob
 from collections import OrderedDict
 from pkd.models import LwFNet, PatchNet
 from pkd.losses import CrossEntropyLabelSmooth, TripletLoss
@@ -229,7 +230,7 @@ class BasePatchKD(object):
         # print(('successfully resume model from {}'.format(model_path)))
         '''resume model from resume_epoch'''
         for module_name, module in self.model_dict.items():
-            model_path = os.path.join(models_dir, f'model_{module_name}_50.pkl')
+            model_path = glob.glob(os.path.join(models_dir, f'model_{module_name}_*.pkl'))[0]
             state_dict = torch.load(model_path)
             model_dict = module.state_dict()
             new_state_dict = OrderedDict()

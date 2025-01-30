@@ -14,56 +14,56 @@ IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [0.229, 0.224, 0.225]
 
 
-# def visualize(config, base, loaders):
-#
-# 	base.set_eval()
-#
-# 	# meters
-# 	query_features_meter, query_pids_meter, query_cids_meter = CatMeter(), CatMeter(), CatMeter()
-# 	gallery_features_meter, gallery_pids_meter, gallery_cids_meter = CatMeter(), CatMeter(), CatMeter()
-#
-# 	# init dataset
-# 	if config.visualize_dataset == 'market':
-# 		_datasets = [loaders.market_query_samples, loaders.market_gallery_samples]
-# 		_loaders = [loaders.market_query_loader, loaders.market_gallery_loader]
-# 	elif config.visualize_dataset == 'duke':
-# 		_datasets = [loaders.duke_query_samples, loaders.duke_gallery_samples]
-# 		_loaders = [loaders.duke_query_loader, loaders.duke_gallery_loader]
-# 	elif config.visualize_dataset == 'customed':
-# 		_datasets = [loaders.query_samples, loaders.gallery_samples]
-# 		_loaders = [loaders.query_loader, loaders.gallery_loader]
-#
-# 	# compute query and gallery features
-# 	with torch.no_grad():
-# 		for loader_id, loader in enumerate(_loaders):
-# 			for data in loader:
-# 				# compute feautres
-# 				images, pids, cids = data
-# 				images = images.to(base.device)
-# 				features = base.model(images)
-# 				# save as query features
-# 				if loader_id == 0:
-# 					query_features_meter.update(features.data)
-# 					query_pids_meter.update(pids)
-# 					query_cids_meter.update(cids)
-# 				# save as gallery features
-# 				elif loader_id == 1:
-# 					gallery_features_meter.update(features.data)
-# 					gallery_pids_meter.update(pids)
-# 					gallery_cids_meter.update(cids)
-#
-# 	# compute distance
-# 	query_features = query_features_meter.get_val()
-# 	gallery_features = gallery_features_meter.get_val()
-#
-# 	if config.test_metric is 'cosine':
-# 		distance = tensor_cosine_dist(query_features, gallery_features).data.cpu().numpy()
-#
-# 	elif config.test_metric is 'euclidean':
-# 		distance = tensor_euclidean_dist(query_features, gallery_features).data.cpu().numpy()
-#
-# 	# visualize
-# 	visualize_ranked_results(distance, _datasets, config.visualize_output_path, mode=config.visualize_mode, only_show=config.visualize_mode_onlyshow)
+def visualize(config, base, loaders):
+    base.set_all_model_eval()
+
+    # meters
+    query_features_meter, query_pids_meter, query_cids_meter = CatMeter(), CatMeter(), CatMeter()
+    gallery_features_meter, gallery_pids_meter, gallery_cids_meter = CatMeter(), CatMeter(), CatMeter()
+
+    # init dataset
+    if config.visualize_dataset == 'market':
+        _datasets = [loaders.market_query_samples, loaders.market_gallery_samples]
+        _loaders = [loaders.market_query_loader, loaders.market_gallery_loader]
+    elif config.visualize_dataset == 'duke':
+        _datasets = [loaders.duke_query_samples, loaders.duke_gallery_samples]
+        _loaders = [loaders.duke_query_loader, loaders.duke_gallery_loader]
+    elif config.visualize_dataset == 'customed':
+        _datasets = [loaders.query_samples, loaders.gallery_samples]
+        _loaders = [loaders.query_loader, loaders.gallery_loader]
+
+    # compute query and gallery features
+    with torch.no_grad():
+        for dataset_name, temp_loaders in loaders.test_loader_dict.items():
+            for loader_id, temp_loader in enumerate(temp_loaders):  # Fix: Added enumerate to get loader_id
+                for data in temp_loader:
+                    # compute features
+                    images, pids, cids = data[0:3]
+                    images = images.to(base.device)
+                    features, _, feature_maps = base.model_dict['tasknet'](images, [], force_output_map=True)
+
+                    # save as query features
+                    if loader_id == 0:
+                        query_features_meter.update(features.data)
+                        query_pids_meter.update(pids)
+                        query_cids_meter.update(cids)
+                    # save as gallery features
+                    elif loader_id == 1:
+                        gallery_features_meter.update(features.data)
+                        gallery_pids_meter.update(pids)
+                        gallery_cids_meter.update(cids)
+
+    # compute distance
+    query_features = query_features_meter.get_val()
+    gallery_features = gallery_features_meter.get_val()
+
+    if config.test_metric == 'cosine':  # Fix: Changed `is` to `==`
+        distance = tensor_cosine_dist(query_features, gallery_features).data.cpu().numpy()
+    elif config.test_metric == 'euclidean':  # Fix: Changed `is` to `==`
+        distance = tensor_euclidean_dist(query_features, gallery_features).data.cpu().numpy()
+
+    # visualize
+    visualize_ranked_results(distance, _datasets, config.visualize_output_path, mode=config.visualize_mode, only_show=config.visualize_mode_onlyshow)
 
 
 # visualize sampled patch
@@ -103,13 +103,11 @@ def featuremaps2heatmaps(base, imgs, theta, image_paths, current_step, current_e
     return torch.from_numpy(grid_img_tensor)
 
 
-def visualize(config, base, loaders):
+def visualize_patches(config, base, loaders):
     base.set_all_model_eval()
 
     with torch.no_grad():
         for dataset_name, temp_loaders in loaders.test_loader_dict.items():
-            if dataset_name != 'cuhk03':
-                continue
             for data in temp_loaders[0]:
                 # compute feautres
                 images, pids, cids = data[0:3]
@@ -126,14 +124,14 @@ def visualize(config, base, loaders):
 # def generate_patch_features(x, theta):
 #     output = (x[:, np.newaxis] * theta[:, :, np.newaxis]).sum(dim=(3, 4))
 #     return rearrange(output, 'n k c -> (n k) c')
-#
-#
-#
+
+
+
 # def visualize(config, base, loaders):
 #     base.set_all_model_eval()
-#
+
 #     feature_dict = {}
-#
+
 #     with torch.no_grad():
 #         for dataset_name, temp_loaders in loaders.test_loader_dict.items():
 #             for data in temp_loaders[0]:

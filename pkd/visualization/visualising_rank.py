@@ -70,7 +70,7 @@ def visualize_ranked_results2(distmat, dataset, save_dir='', topk=20):
     print("Done")
 
 
-def visualize_ranked_results(distmat, dataset, save_dir='', topk=20, sort='descend', mode='inter-camera', only_show=None):
+def visualize_ranked_results(distmat, dataset, save_dir='', topk=20, sort='ascend', mode='inter-camera', only_show=None):
     """Visualizes ranked results.
     Args:
         dismat (numpy.ndarray): distance matrix of shape (nq, ng)
@@ -96,15 +96,15 @@ def visualize_ranked_results(distmat, dataset, save_dir='', topk=20, sort='desce
     assert sort in ['descend', 'ascend']
     assert mode in ['intra-camera', 'inter-camera', 'all']
 
-    if sort is 'ascend':
-        indices = np.argsort(distmat, axis=1)
-    elif sort is 'descend':
-        indices = np.argsort(distmat, axis=1)[:, ::-1]
+    indices = np.argsort(distmat, axis=1)
+    if sort == 'descend':
+        indices = indices[:, ::-1]
 
     make_dirs(save_dir)
 
     def cat_imgs_to(image_list, hit_list, text_list, target_dir):
 
+        # Identify the same person by calculating the distance between the query and the gallery
         images = []
         for img, hit, text in zip(image_list, hit_list, text_list):
             img = Image.open(img).resize((64, 128))
@@ -135,7 +135,7 @@ def visualize_ranked_results(distmat, dataset, save_dir='', topk=20, sort='desce
         text_list = []
 
         # query image
-        qimg_path, qpid, qcamid = query[q_idx]
+        qimg_path, qpid, qcamid, _, _ = query[q_idx]
         image_list.append(qimg_path)
         hit_list.append(True)
         text_list.append(0.0)
@@ -149,7 +149,7 @@ def visualize_ranked_results(distmat, dataset, save_dir='', topk=20, sort='desce
         # matched images
         rank_idx = 1
         for ii, g_idx in enumerate(indices[q_idx, :]):
-            gimg_path, gpid, gcamid = gallery[g_idx]
+            gimg_path, gpid, gcamid, _, _ = gallery[g_idx]
             if mode == 'intra-camera':
                 valid = qcamid == gcamid
             elif mode == 'inter-camera':
