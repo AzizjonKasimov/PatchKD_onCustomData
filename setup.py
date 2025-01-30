@@ -30,3 +30,4 @@ setup(
     keywords=['Person Re-Identification', 'Deep Learning', 'Computer Vision'],
     ext_modules=cythonize(ext_modules)
 )
+
