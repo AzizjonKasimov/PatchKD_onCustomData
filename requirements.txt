@@ -8,7 +8,5 @@ numpy
 opencv-python
 prettytable
 scikit-learn
-torch
-torchvision
 tqdm
 visdom

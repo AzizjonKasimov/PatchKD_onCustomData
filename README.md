@@ -3,7 +3,7 @@ Code for ACM MM 2022 paper [Patch-based Knowledge Distillation for Lifelong Pers
 
 ![Framework](figs/framework.png)
 
-## Installation
+## Installation. I recommend using conda environment for creating environment and installing the packages.
 ```shell
 git clone https://github.com/feifeiobama/PatchKD
 cd PatchKD
@@ -32,11 +32,6 @@ Visualization from checkpoint:
 ```shell
 python train_test.py --mode visualize --resume_visualize_model /path/to/pretrained/model
 ```
-
-## Results
-The following results were obtained with single NVIDIA 2080 Ti GPU:
-
-![Results](figs/results.png)
 
 ## Citation
 ```
