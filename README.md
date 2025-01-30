@@ -5,8 +5,6 @@ Code for ACM MM 2022 paper [Patch-based Knowledge Distillation for Lifelong Pers
 
 ## Installation. I recommend using conda environment for creating environment and installing the packages.
 ```shell
-git clone https://github.com/feifeiobama/PatchKD
-cd PatchKD
 pip install -r requirements.txt
 ```
 
